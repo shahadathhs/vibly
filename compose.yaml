@@ -1,0 +1,60 @@
+services:
+  # Production server
+  api:
+    container_name: ${PACKAGE_NAME}-prod
+    image: ${DOCKER_USERNAME}/${PACKAGE_NAME}:${PACKAGE_VERSION}
+
+    profiles:
+      - prod
+    
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    ports:
+      - "8080:${PORT:-8080}"
+
+    env_file:
+      - .env
+
+    environment:
+      GO_ENV: production
+    
+    command: ["./server"]
+    
+    restart: always
+    
+    volumes:
+      - prod_data:/app/data
+
+  # Development server with live reload
+  api-dev:
+    container_name: ${PACKAGE_NAME}-dev
+    image: ${DOCKER_USERNAME}/${PACKAGE_NAME}-dev:${PACKAGE_VERSION}
+    
+    profiles:
+      - dev
+
+    build:
+      context: .
+      dockerfile: Dockerfile.dev   # separate Dockerfile for Air
+
+    ports:
+      - "8081:${PORT:-8080}"  # map dev to a different port
+
+    env_file:
+      - .env
+    
+    environment:
+      GO_ENV: development
+
+    command: ["air", "-c", ".air.toml"]
+
+    restart: unless-stopped
+
+    volumes:
+      - .:/app
+      - ./data:/app/data
+
+volumes:
+  prod_data:

@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      run: go fmt ./...
+    vet:
+      run: go vet ./...
+    tidy:
+      run: go mod tidy
+    fix-permissions:
+      run: chmod +x ./scripts/*.sh
+
+pre-push:
+  parallel: true
+  commands:
+    swagger:
+      run: ./scripts/generate-swagger.sh
+    build-local:
+      run: ./scripts/build-local.sh
+    # build-docker:
+    #   run: ./scripts/build-docker.sh

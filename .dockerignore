@@ -1,0 +1,59 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.a
+*.o
+
+# Go workspace and build output
+/go-course
+**/go-course
+bin/
+
+*.mod.tmp
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+
+# OS files
+.DS_Store
+*~
+
+# Shell history
+.bash_history
+.zsh_history
+
+# GitHub Actions cache folders
+.github/workflows/*.cache/
+
+# Optional: environment/config files
+.env
+.env.local
+.env.*.local
+
+# node_modules (if using Node.js)
+node_modules/
+
+# Ignore Docker-related files
+Dockerfile
+compose.yaml
+
+# other
+vendor
+tmp
+temp
+dist
+*.md

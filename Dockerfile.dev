@@ -1,0 +1,21 @@
+# Dev image with Air
+FROM golang:1.25-alpine
+
+RUN apk add --no-cache git bash
+
+# Install Air
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+# Copy go.mod/go.sum to enable module caching
+COPY go.mod go.sum ./
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 8080
+
+# Run Air by default
+CMD ["air", "-c", ".air.toml"]
