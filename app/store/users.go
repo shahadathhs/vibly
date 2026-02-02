@@ -31,6 +31,7 @@ func (s *UserStore) AddUser(name, email, password string) (*models.User, error) 
 		Name:         name,
 		Email:        email,
 		PasswordHash: utils.HashPassword(password),
+		StreamKey:    "live_" + utils.GenerateUUID()[:8],
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}

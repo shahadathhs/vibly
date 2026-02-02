@@ -9,6 +9,13 @@ pre-commit:
       run: go mod tidy
     fix-permissions:
       run: chmod +x ./scripts/*.sh
+    check-build:
+      run: go build -o /dev/null ./main.go
+
+commit-msg:
+  commands:
+    lint:
+      run: ./scripts/lint-commit.sh {1}
 
 pre-push:
   parallel: true

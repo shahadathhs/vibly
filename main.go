@@ -43,6 +43,10 @@ func main() {
 	mux.HandleFunc("/api/auth/register", handlers.RegisterHandler)
 	mux.HandleFunc("/api/auth/login", handlers.LoginHandler)
 
+	// Channel & Chat routes
+	mux.HandleFunc("/ws/chat", handlers.ChatWebSocketHandler)
+	mux.HandleFunc("/api/chat/history", handlers.ChatHistoryHandler)
+
 	// Wrap with logger + recover
 	handler := middleware.Recover(middleware.Logger(mux))
 

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vibly Chat Test</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-dark: #0f1115;
+        --bg-card: #1a1d23;
+        --accent: #18d4c3;
+        --text-primary: #ffffff;
+        --text-secondary: #94a3b8;
+        --border: #2e343e;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg-dark);
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        height: 100vh;
+      }
+
+      #app {
+        display: flex;
+        flex: 1;
+        max-width: 1200px;
+        margin: auto;
+        height: 80vh;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+
+      .sidebar {
+        width: 300px;
+        border-right: 1px solid var(--border);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .message {
+        background: #2e343e;
+        padding: 12px;
+        border-radius: 8px;
+        max-width: 80%;
+        position: relative;
+      }
+
+      .message.reply {
+        border-left: 3px solid var(--accent);
+        margin-left: 20px;
+      }
+
+      .user-name {
+        font-size: 0.8rem;
+        color: var(--accent);
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+
+      .content {
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+
+      .reply-meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+        font-style: italic;
+      }
+
+      .input-area {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+      }
+
+      .reply-context {
+        background: #2e343e;
+        padding: 8px 12px;
+        border-radius: 6px;
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      input {
+        background: #0f1115;
+        border: 1px solid var(--border);
+        color: white;
+        padding: 12px;
+        border-radius: 6px;
+        flex: 1;
+      }
+
+      button {
+        background: var(--accent);
+        color: black;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+
+      .btn-reply {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        font-size: 0.7rem;
+        background: transparent;
+        color: var(--text-secondary);
+        padding: 2px 6px;
+        border: 1px solid var(--border);
+      }
+
+      .btn-reply:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="sidebar">
+        <h3>Vibly Chat ⚡</h3>
+        <div style="margin-bottom: 10px">
+          <label style="font-size: 0.8rem; color: var(--text-secondary)"
+            >Channel ID</label
+          >
+          <input
+            type="text"
+            id="channelInput"
+            value="general"
+            style="width: 100%; box-sizing: border-box"
+          />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label style="font-size: 0.8rem; color: var(--text-secondary)"
+            >User Name</label
+          >
+          <input
+            type="text"
+            id="userInput"
+            value="User_1"
+            style="width: 100%; box-sizing: border-box"
+          />
+        </div>
+        <button onclick="connect()">Connect</button>
+        <div
+          id="status"
+          style="
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+          "
+        >
+          Disconnected
+        </div>
+      </div>
+      <div class="chat-area">
+        <div class="messages" id="messageList"></div>
+        <div class="input-area">
+          <div class="reply-context" id="replyContext">
+            <span id="replyText"></span>
+            <button
+              style="background: transparent; color: white; padding: 0"
+              onclick="cancelReply()"
+            >
+              ✕
+            </button>
+          </div>
+          <div style="display: flex; gap: 10px">
+            <input
+              type="text"
+              id="msgInput"
+              placeholder="Type a message..."
+              onkeypress="handleKey(event)"
+            />
+            <button onclick="send()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let ws;
+      let replyingToId = null;
+
+      function connect() {
+        if (ws) ws.close();
+        const channel = document.getElementById("channelInput").value;
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = window.location.host;
+
+        ws = new WebSocket(`${protocol}//${host}/ws/chat?channelID=${channel}`);
+
+        ws.onopen = () => {
+          document.getElementById("status").innerText =
+            "Connected to " + channel;
+          document.getElementById("status").style.color = "var(--accent)";
+          loadHistory(channel);
+        };
+
+        ws.onmessage = (e) => {
+          const event = JSON.parse(e.data);
+          if (event.type === "chat_message") {
+            renderMessage(event.payload);
+          }
+        };
+
+        ws.onclose = () => {
+          document.getElementById("status").innerText = "Disconnected";
+          document.getElementById("status").style.color =
+            "var(--text-secondary)";
+        };
+      }
+
+      async function loadHistory(channel) {
+        const res = await fetch(`/api/chat/history?channelID=${channel}`);
+        const data = await res.json();
+        document.getElementById("messageList").innerHTML = "";
+        data.payload.forEach(renderMessage);
+      }
+
+      function renderMessage(msg) {
+        const list = document.getElementById("messageList");
+        const div = document.createElement("div");
+        div.className = "message" + (msg.parent_id ? " reply" : "");
+
+        let html = "";
+        if (msg.parent_id) {
+          html += `<div class="reply-meta">Replying to message ${msg.parent_id.substring(0, 8)}</div>`;
+        }
+        html += `<div class="user-name">${msg.user_name}</div>`;
+        html += `<div class="content">${msg.content}</div>`;
+        html += `<button class="btn-reply" onclick="startReply('${msg.id}', '${msg.user_name}')">Reply</button>`;
+
+        div.innerHTML = html;
+        list.appendChild(div);
+        list.scrollTop = list.scrollHeight;
+      }
+
+      function startReply(id, user) {
+        replyingToId = id;
+        document.getElementById("replyContext").style.display = "flex";
+        document.getElementById("replyText").innerText = "Replying to " + user;
+      }
+
+      function cancelReply() {
+        replyingToId = null;
+        document.getElementById("replyContext").style.display = "none";
+      }
+
+      function send() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        const input = document.getElementById("msgInput");
+        const content = input.value.trim();
+        if (!content) return;
+
+        const name = document.getElementById("userInput").value;
+        const event = {
+          type: "chat_message",
+          payload: {
+            user_name: name,
+            content: content,
+            parent_id: replyingToId,
+          },
+        };
+
+        ws.send(JSON.stringify(event));
+        input.value = "";
+        cancelReply();
+      }
+
+      function handleKey(e) {
+        if (e.key === "Enter") send();
+      }
+    </script>
+  </body>
+</html>
